@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   AdminSettings,
   Captain,
+  DebtPayment,
   Merchant,
   Order,
   Product,
@@ -94,6 +95,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   const [newProdName, setNewProdName] = useState('');
   const [newProdCategory, setNewProdCategory] = useState<ProductCategory>(merchant.category);
   const [newProdPrice, setNewProdPrice] = useState<number>(30);
+  const [newProdDiscountPrice, setNewProdDiscountPrice] = useState<string>('');
   const [newProdUnit, setNewProdUnit] = useState<ProductUnit>('كيلو');
   const [newProdImage, setNewProdImage] = useState<string>('');
   const [newProdDesc, setNewProdDesc] = useState('');
@@ -103,6 +105,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   const [debtPayMethod, setDebtPayMethod] = useState<'vodafone_cash' | 'instapay'>('vodafone_cash');
   const [debtPayAmount, setDebtPayAmount] = useState<number>(merchant.debtBalance || 50);
   const [debtPayRef, setDebtPayRef] = useState('');
+  const [debtPayReceiptImage, setDebtPayReceiptImage] = useState<string>('');
   const [debtSuccessMsg, setDebtSuccessMsg] = useState('');
 
   // Handler for image upload
@@ -113,6 +116,19 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
           setNewProdImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setDebtPayReceiptImage(reader.result);
         }
       };
       reader.readAsDataURL(file);
@@ -206,6 +222,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
       name: newProdName.trim(),
       category: newProdCategory,
       price: Number(newProdPrice),
+      discountPrice: newProdDiscountPrice ? Number(newProdDiscountPrice) : undefined,
       unit: newProdUnit,
       image: img,
       description: newProdDesc.trim() || 'منتج طازج ومختار بعناية وفق أعلى معايير الجودة',
@@ -219,20 +236,22 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     setNewProdName('');
     setNewProdDesc('');
     setNewProdImage('');
+    setNewProdDiscountPrice('');
   };
 
-  // Submit debt payment
+  // Submit debt payment with image upload proof
   const handleDebtPaySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!debtPayAmount || !debtPayRef.trim()) return;
+    if (!debtPayAmount || (!debtPayReceiptImage && !debtPayRef.trim())) return;
 
-    const newPayment = {
+    const newPayment: DebtPayment = {
       id: `pay-${Date.now()}`,
       merchantId: merchant.id,
       merchantName: merchant.storeName,
       amount: Number(debtPayAmount),
       method: debtPayMethod,
-      refNumber: debtPayRef.trim(),
+      receiptImage: debtPayReceiptImage || undefined,
+      refNumber: debtPayRef.trim() || 'إشعار تحويل مرفق بالصورة',
       date: new Date().toISOString(),
       status: 'pending' as const,
     };
@@ -1006,17 +1025,33 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">السعر بالجنيه (ج.م) *</label>
-                <input
-                  type="number"
-                  required
-                  min={1}
-                  value={newProdPrice}
-                  onChange={(e) => setNewProdPrice(Number(e.target.value))}
-                  placeholder="35"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:bg-white focus:outline-none"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">السعر الأصلي (ج.م) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={newProdPrice}
+                    onChange={(e) => setNewProdPrice(Number(e.target.value))}
+                    placeholder="35"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-rose-700 mb-1">
+                    سعر العرض / الخصم (ج.م) - اختياري
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newProdDiscountPrice}
+                    onChange={(e) => setNewProdDiscountPrice(e.target.value)}
+                    placeholder="مثال: 29 (يظهر كعرض خاص)"
+                    className="w-full bg-slate-50 border border-rose-200 rounded-xl p-2 text-xs focus:bg-white focus:outline-none"
+                  />
+                </div>
               </div>
 
               {/* Image Upload Requirement */}
@@ -1189,16 +1224,44 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
                   />
                 </div>
 
+                {/* Receipt Image Screenshot Upload (Requested Feature) */}
+                <div className="space-y-1.5 p-3 rounded-2xl border-2 border-dashed border-emerald-300 bg-emerald-50/50">
+                  <label className="block font-bold text-emerald-950">
+                    رفع صورة إشعار / سكرين شوت إثبات التحويل *
+                  </label>
+                  <label className="flex items-center justify-center gap-2 p-3 bg-white border border-emerald-300 hover:bg-emerald-50 rounded-xl cursor-pointer transition-colors text-emerald-800 font-bold">
+                    <Upload className="w-4 h-4 text-emerald-600" />
+                    <span>اختر صورة إشعار التحويل من الجهاز</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleReceiptFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                  {debtPayReceiptImage && (
+                    <div className="flex items-center gap-2 p-2 bg-white rounded-xl border border-emerald-200 mt-2">
+                      <img
+                        src={debtPayReceiptImage}
+                        alt="إثبات التحويل"
+                        className="w-14 h-14 rounded-lg object-cover border"
+                      />
+                      <span className="text-emerald-700 font-bold text-xs">
+                        تم إرفاق صورة إثبات التحويل بنجاح ✓
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">
-                    رقم العملية أو رقم المحفظة المحول منها *
+                    ملاحظات أو رقم العملية / المحفظة (اختياري)
                   </label>
                   <input
                     type="text"
-                    required
                     value={debtPayRef}
                     onChange={(e) => setDebtPayRef(e.target.value)}
-                    placeholder="مثال: 010xxxxxxxx أو كود المعاملة"
+                    placeholder="مثال: تم التحويل بنجاح"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:bg-white text-left"
                     dir="ltr"
                   />

@@ -5,6 +5,7 @@ import {
   CartItem,
   Customer,
   Merchant,
+  MonthlyDeliveryPackage,
   Order,
   PasswordResetRequest,
   Product,
@@ -28,6 +29,7 @@ import { CartModal } from './components/CustomerView/CartModal';
 import { CheckoutModal } from './components/CustomerView/CheckoutModal';
 import { CustomerOrdersModal } from './components/CustomerView/CustomerOrdersModal';
 import { SupportModal } from './components/CustomerView/SupportModal';
+import { PackagesModal } from './components/CustomerView/PackagesModal';
 
 import { MerchantAuth } from './components/MerchantView/MerchantAuth';
 import { MerchantDashboard } from './components/MerchantView/MerchantDashboard';
@@ -89,6 +91,38 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isPackagesOpen, setIsPackagesOpen] = useState(false);
+
+  // Customer Monthly Subscription state
+  const [customerSubscription, setCustomerSubscription] = useState<{
+    isSubscribed: boolean;
+    planName?: string;
+    expiresAt?: string;
+  }>(() => {
+    const saved = localStorage.getItem('bekala_customer_subscription');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return { isSubscribed: false };
+      }
+    }
+    return { isSubscribed: false };
+  });
+
+  const handleSubscribePackage = (pkg: MonthlyDeliveryPackage, paymentMethod: string, proof: string) => {
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 30);
+    const newSub = {
+      isSubscribed: true,
+      planName: pkg.name,
+      expiresAt: expiry.toISOString(),
+      paymentMethod,
+      proof,
+    };
+    setCustomerSubscription(newSub);
+    localStorage.setItem('bekala_customer_subscription', JSON.stringify(newSub));
+  };
 
   // Mandatory Charter / Terms Modal State
   const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -328,6 +362,8 @@ export default function App() {
                 setTermsReadOnly(true);
                 setIsTermsOpen(true);
               }}
+              onOpenPackages={() => setIsPackagesOpen(true)}
+              hasSubscription={customerSubscription.isSubscribed}
             />
 
             <div className="max-w-7xl mx-auto px-4 py-6">
@@ -495,6 +531,7 @@ export default function App() {
           setIsCheckoutOpen(true);
         }}
         shippingPerStore={settings.defaultShippingPerStore}
+        hasDeliverySubscription={customerSubscription.isSubscribed}
       />
 
       <CheckoutModal
@@ -506,6 +543,7 @@ export default function App() {
         instapayAddress={settings.instapayAddress}
         onOrderPlaced={handleOrderPlaced}
         initialCustomer={customers[0]}
+        hasDeliverySubscription={customerSubscription.isSubscribed}
       />
 
       <CustomerOrdersModal
@@ -514,6 +552,17 @@ export default function App() {
         orders={orders}
         onConfirmDelivery={handleConfirmCustomerDelivery}
         onRequestReturn={handleRequestReturn}
+      />
+
+      <PackagesModal
+        isOpen={isPackagesOpen}
+        onClose={() => setIsPackagesOpen(false)}
+        packages={settings.monthlyPackages || []}
+        isCurrentlySubscribed={customerSubscription.isSubscribed}
+        activePlanName={customerSubscription.planName}
+        onSubscribe={handleSubscribePackage}
+        vodafoneNumber={settings.vodafoneCashNumber}
+        instapayAddress={settings.instapayAddress}
       />
 
       <SupportModal

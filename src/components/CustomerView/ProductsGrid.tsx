@@ -98,6 +98,16 @@ export const ProductsGrid: React.FC<ProductsGridProps> = ({
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
+                  
+                  {/* Offers & Discounts Badge */}
+                  {product.discountPrice && product.discountPrice < product.price && (
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5 animate-pulse">
+                        <span>خصم {Math.round(((product.price - product.discountPrice) / product.price) * 100)}%</span>
+                      </span>
+                    </div>
+                  )}
+
                   <div className="absolute top-2 right-2">
                     <span className="bg-white/90 backdrop-blur-xs text-[10px] font-bold text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 shadow-xs">
                       {product.unit}
@@ -125,17 +135,37 @@ export const ProductsGrid: React.FC<ProductsGridProps> = ({
 
                   <div className="pt-3 mt-2 border-t border-slate-100 flex items-center justify-between">
                     <div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-base font-black text-emerald-700">
-                          {product.price}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-500">ج.م</span>
-                      </div>
+                      {product.discountPrice && product.discountPrice < product.price ? (
+                        <div className="space-y-0.5">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-base font-black text-rose-700">
+                              {product.discountPrice}
+                            </span>
+                            <span className="text-[10px] font-bold text-rose-600">ج.م</span>
+                          </div>
+                          <span className="line-through text-[10px] text-slate-400 font-bold block">
+                            {product.price} ج.م
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-black text-emerald-700">
+                            {product.price}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500">ج.م</span>
+                        </div>
+                      )}
                       <span className="text-[10px] text-slate-400">لكل {product.unit}</span>
                     </div>
 
                     <button
-                      onClick={() => onAddToCart(product)}
+                      onClick={() =>
+                        onAddToCart(
+                          product.discountPrice && product.discountPrice < product.price
+                            ? { ...product, price: product.discountPrice }
+                            : product
+                        )
+                      }
                       className={`p-2 rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center ${
                         inCart
                           ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'

@@ -270,13 +270,6 @@ export const MerchantAuth: React.FC<MerchantAuthProps> = ({
                 </div>
               </div>
 
-              {/* Demo Quick Fill Hint */}
-              <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-emerald-900 flex items-center justify-between">
-                <span>حساب تجريبي جاهز:</span>
-                <span className="font-mono font-bold" dir="ltr">
-                  merchant@bekala.com / merchant123
-                </span>
-              </div>
 
               <button
                 type="submit"

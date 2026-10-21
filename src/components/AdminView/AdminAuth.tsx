@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Supervisor } from '../../types';
-import { Shield, Lock, Mail, AlertCircle, KeyRound, UserCheck } from 'lucide-react';
+import { Shield, Lock, Mail, AlertCircle, KeyRound } from 'lucide-react';
 
 interface AdminAuthProps {
   onAdminLogin: (type: 'admin' | 'supervisor', supervisor?: Supervisor) => void;
@@ -15,8 +15,8 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
   adminEmail,
   adminPass,
 }) => {
-  const [email, setEmail] = useState('admin@bekala.com');
-  const [password, setPassword] = useState('admin123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
@@ -46,16 +46,6 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
     }
 
     setError('بيانات الدخول غير صحيحة أو الحساب غير مفعل.');
-  };
-
-  const handleQuickFillAdmin = () => {
-    setEmail(adminEmail);
-    setPassword(adminPass);
-  };
-
-  const handleQuickFillSupervisor = () => {
-    setEmail('supervisor@bekala.com');
-    setPassword('super123456');
   };
 
   return (
@@ -122,31 +112,6 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
             <KeyRound className="w-4 h-4 text-emerald-400" />
             <span>تسجيل الدخول للنظام</span>
           </button>
-
-          {/* Quick Demo Credentials */}
-          <div className="pt-3 border-t border-slate-100 space-y-2">
-            <span className="text-slate-400 text-[11px] block text-center">
-              بيانات الدخول التجريبية السريعة:
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleQuickFillAdmin}
-                className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-xl font-bold text-[11px] transition-colors cursor-pointer flex items-center justify-center gap-1"
-              >
-                <Shield className="w-3.5 h-3.5 text-emerald-700" />
-                <span>المدير العام (Admin)</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleQuickFillSupervisor}
-                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 rounded-xl font-bold text-[11px] transition-colors cursor-pointer flex items-center justify-center gap-1"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-slate-600" />
-                <span>مشرف بصلاحيات</span>
-              </button>
-            </div>
-          </div>
         </form>
       </div>
     </div>

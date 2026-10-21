@@ -28,6 +28,7 @@ interface CheckoutModalProps {
   instapayAddress: string;
   onOrderPlaced: (newOrder: Order) => void;
   initialCustomer?: Customer | null;
+  hasDeliverySubscription?: boolean;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -39,21 +40,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   instapayAddress,
   onOrderPlaced,
   initialCustomer,
+  hasDeliverySubscription,
 }) => {
-  // Form fields
-  const [name, setName] = useState(initialCustomer?.name || 'أحمد سعيد عبد الفتاح');
-  const [phone, setPhone] = useState(initialCustomer?.phone || '01099887711');
-  const [email, setEmail] = useState(initialCustomer?.email || 'customer@bekala.com');
+  // Form fields (real and clean)
+  const [name, setName] = useState(initialCustomer?.name || '');
+  const [phone, setPhone] = useState(initialCustomer?.phone || '');
+  const [email, setEmail] = useState(initialCustomer?.email || '');
   const [password, setPassword] = useState('123456');
 
   // Address
-  const [governorate, setGovernorate] = useState(initialCustomer?.governorate || 'القاهرة');
-  const [district, setDistrict] = useState(initialCustomer?.district || 'المعادي');
-  const [street, setStreet] = useState(initialCustomer?.street || 'شارع 9 الرئيسي متفرع من دجلة');
-  const [building, setBuilding] = useState(initialCustomer?.building || 'برج الياسمين رقم 14');
-  const [floor, setFloor] = useState(initialCustomer?.floor || 'الدور الرابع');
-  const [apartment, setApartment] = useState(initialCustomer?.apartment || 'شقة 402');
-  const [notes, setNotes] = useState(initialCustomer?.notes || 'يرجى الاتصال قبل الصعود');
+  const [governorate, setGovernorate] = useState(initialCustomer?.governorate || 'الإسكندرية');
+  const [district, setDistrict] = useState(initialCustomer?.district || 'العصافرة');
+  const [street, setStreet] = useState(initialCustomer?.street || '');
+  const [building, setBuilding] = useState(initialCustomer?.building || '');
+  const [floor, setFloor] = useState(initialCustomer?.floor || '');
+  const [apartment, setApartment] = useState(initialCustomer?.apartment || '');
+  const [notes, setNotes] = useState(initialCustomer?.notes || '');
 
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
@@ -89,7 +91,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
-  const totalShipping = merchantIds.length * shippingPerStore;
+  const totalShipping = hasDeliverySubscription ? 0 : merchantIds.length * shippingPerStore;
   const grandTotal = itemsSubtotal + totalShipping;
 
   const currentGovObj =
@@ -156,6 +158,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       paymentRefNumber: paymentRefNumber.trim() || undefined,
       status: 'pending',
       createdAt: new Date().toISOString(),
+      isSubscriptionFreeDelivery: hasDeliverySubscription,
     };
 
     setTimeout(() => {
@@ -554,14 +557,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </div>
 
           {/* Final Totals Breakdown */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1.5 text-xs">
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+            {hasDeliverySubscription && (
+              <div className="p-2.5 bg-emerald-100/90 rounded-xl border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-1.5">
+                <span className="text-base">🎉</span>
+                <span>باقة التوصيل الشهري نشطة: تم إعفاؤك بالكامل من رسوم الشحن (0 ج.م)!</span>
+              </div>
+            )}
             <div className="flex justify-between text-slate-600">
               <span>إجمالي قيمة المنتجات ({items.length} أصناف):</span>
               <span className="font-bold text-slate-900">{itemsSubtotal} ج.م</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>رسوم التوصيل ({merchantIds.length} متاجر):</span>
-              <span className="font-bold text-slate-900">{totalShipping} ج.م</span>
+              <span className="font-bold text-slate-900">
+                {hasDeliverySubscription ? 'مجاني (0 ج.م عبر الباقة)' : `${totalShipping} ج.م`}
+              </span>
             </div>
             <div className="flex justify-between text-sm md:text-base font-black text-slate-900 pt-2 border-t border-slate-200">
               <span>المبلغ الإجمالي المستحق:</span>

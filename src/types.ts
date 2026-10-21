@@ -47,9 +47,20 @@ export interface DebtPayment {
   merchantName: string;
   amount: number;
   method: 'vodafone_cash' | 'instapay';
-  refNumber: string;
+  receiptImage?: string; // صورة إثبات التحويل / لقطة الشاشة
+  refNumber?: string;
   date: string;
   status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface MonthlyDeliveryPackage {
+  id: string;
+  name: string;
+  price: number;
+  durationDays: number;
+  description: string;
+  features: string[];
+  isPopular?: boolean;
 }
 
 export interface Customer {
@@ -67,6 +78,9 @@ export interface Customer {
   notes?: string;
   isBlocked: boolean;
   registeredAt: string;
+  hasDeliverySubscription?: boolean;
+  deliverySubscriptionPlan?: string;
+  deliverySubscriptionExpiresAt?: string;
 }
 
 export interface Product {
@@ -150,6 +164,7 @@ export interface Order {
   returnRequest?: ReturnRequest;
   customerConfirmedDelivery?: boolean;
   merchantConfirmedDelivery?: boolean;
+  isSubscriptionFreeDelivery?: boolean;
 }
 
 export interface Captain {
@@ -201,6 +216,7 @@ export interface AdminSettings {
   instapayAddress: string;
   supportPhone: string;
   supportWhatsapp: string;
+  monthlyPackages?: MonthlyDeliveryPackage[];
 }
 
 export interface Supervisor {

@@ -8,6 +8,7 @@ import {
   PasswordResetRequest,
   Product,
   ProductCategory,
+  ProductUnit,
   SponsoredAd,
   Suggestion,
   Supervisor,
@@ -166,7 +167,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editShipping, setEditShipping] = useState(settings.defaultShippingPerStore);
   const [editVodafone, setEditVodafone] = useState(settings.vodafoneCashNumber);
   const [editInstapay, setEditInstapay] = useState(settings.instapayAddress);
+  const [editSupportPhone, setEditSupportPhone] = useState(settings.supportPhone || '01022334455');
+  const [editSupportWhatsapp, setEditSupportWhatsapp] = useState(settings.supportWhatsapp || '201022334455');
   const [financeSaveSuccess, setFinanceSaveSuccess] = useState(false);
+
+  // Admin Upload Product to Merchant State
+  const [isAdminAddProductOpen, setIsAdminAddProductOpen] = useState(false);
+  const [adminTargetMerchantId, setAdminTargetMerchantId] = useState(merchants.length > 0 ? merchants[0].id : '');
+  const [adminNewProdName, setAdminNewProdName] = useState('');
+  const [adminNewProdPrice, setAdminNewProdPrice] = useState<number>(35);
+  const [adminNewProdDiscountPrice, setAdminNewProdDiscountPrice] = useState<string>('');
+  const [adminNewProdCategory, setAdminNewProdCategory] = useState<ProductCategory>('سوبرماركت كامل');
+  const [adminNewProdUnit, setAdminNewProdUnit] = useState<ProductUnit>('كيلو');
+  const [adminNewProdImage, setAdminNewProdImage] = useState<string>('');
+  const [adminNewProdDesc, setAdminNewProdDesc] = useState('');
+
+  // Receipt image popup preview state
+  const [previewReceiptImage, setPreviewReceiptImage] = useState<string | null>(null);
 
   // Calculations
   const totalOrdersCount = orders.length;
@@ -341,9 +358,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       defaultShippingPerStore: Number(editShipping),
       vodafoneCashNumber: editVodafone,
       instapayAddress: editInstapay,
+      supportPhone: editSupportPhone,
+      supportWhatsapp: editSupportWhatsapp,
     });
     setFinanceSaveSuccess(true);
     setTimeout(() => setFinanceSaveSuccess(false), 2500);
+  };
+
+  // Admin add product to any merchant store
+  const handleAdminAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminTargetMerchantId || !adminNewProdName.trim() || !adminNewProdPrice) return;
+
+    const targetMerchant = merchants.find((m) => m.id === adminTargetMerchantId);
+    if (!targetMerchant) return;
+
+    const img =
+      adminNewProdImage ||
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=80';
+
+    const newProd: Product = {
+      id: `p-${Date.now()}`,
+      merchantId: targetMerchant.id,
+      merchantName: targetMerchant.storeName,
+      name: adminNewProdName.trim(),
+      category: adminNewProdCategory,
+      price: Number(adminNewProdPrice),
+      discountPrice: adminNewProdDiscountPrice ? Number(adminNewProdDiscountPrice) : undefined,
+      unit: adminNewProdUnit,
+      image: img,
+      description: adminNewProdDesc.trim() || 'منتج طازج ومختار بعناية وفق أعلى معايير الجودة',
+      isAvailable: true,
+      governorate: targetMerchant.governorate,
+      district: targetMerchant.district,
+    };
+
+    onUpdateProducts([newProd, ...products]);
+    setIsAdminAddProductOpen(false);
+    setAdminNewProdName('');
+    setAdminNewProdPrice(35);
+    setAdminNewProdDiscountPrice('');
+    setAdminNewProdDesc('');
+    setAdminNewProdImage('');
   };
 
   // Save Admin Credentials
@@ -880,9 +936,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'products' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-black text-slate-900 text-base">
-              جميع السلع والمنتجات المرفوعة ({products.length})
-            </h3>
+            <div>
+              <h3 className="font-black text-slate-900 text-base">
+                جميع السلع والمنتجات المرفوعة ({products.length})
+              </h3>
+              <p className="text-xs text-slate-500">
+                يمكن للإدارة رفع منتجات وإضافتها مباشرة على أي متجر تاجر مع تحديد السعر والعروض
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (merchants.length > 0 && !adminTargetMerchantId) {
+                  setAdminTargetMerchantId(merchants[0].id);
+                }
+                setIsAdminAddProductOpen(true);
+              }}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>إضافة منتج لمتجر تاجر</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -1018,14 +1091,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       key={p.id}
                       className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-200"
                     >
-                      <div>
-                        <span className="font-bold text-slate-900">
-                          {p.merchantStore} قام بتحويل {p.amount} ج.م عبر{' '}
-                          {p.method === 'vodafone_cash' ? 'فودافون كاش' : 'إنستا باي'}
-                        </span>
-                        <span className="text-[10px] text-slate-500 block">
-                          رقم المرجع: {p.refNumber} • التاريخ: {new Date(p.date).toLocaleDateString('ar-EG')}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        {p.receiptImage && (
+                          <div
+                            onClick={() => setPreviewReceiptImage(p.receiptImage || null)}
+                            className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-400 shrink-0 cursor-pointer hover:opacity-85 transition-opacity relative group"
+                            title="انقر لتكبير صورة إثبات التحويل"
+                          >
+                            <img src={p.receiptImage} alt="إثبات التحويل" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-[9px] font-bold">
+                              تكبير
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-bold text-slate-900 block">
+                            {p.merchantStore} قام بتحويل {p.amount} ج.م عبر{' '}
+                            {p.method === 'vodafone_cash' ? 'فودافون كاش' : 'إنستا باي'}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">
+                            المرجع / الملاحظات: {p.refNumber} • التاريخ: {new Date(p.date).toLocaleDateString('ar-EG')}
+                          </span>
+                          {p.receiptImage && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewReceiptImage(p.receiptImage || null)}
+                              className="text-[10px] text-emerald-700 font-bold underline mt-0.5 cursor-pointer block"
+                            >
+                              عرض صورة الإشعار المرفقة 📸
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <button
@@ -1129,13 +1225,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     dir="ltr"
                   />
                 </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    رقم هاتف الدعم الفني والاتصال *
+                  </label>
+                  <input
+                    type="text"
+                    value={editSupportPhone}
+                    onChange={(e) => setEditSupportPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono focus:bg-white"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    رقم واتساب خدمة العملاء والشكاوى *
+                  </label>
+                  <input
+                    type="text"
+                    value={editSupportWhatsapp}
+                    onChange={(e) => setEditSupportWhatsapp(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono focus:bg-white"
+                    dir="ltr"
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors cursor-pointer"
               >
-                حفظ الإعدادات المالية
+                حفظ بيانات الدعم والماليات
               </button>
             </form>
           </div>
@@ -1813,6 +1935,181 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* POPUP MODAL: Admin Upload Product to Merchant */}
+      {isAdminAddProductOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 text-xs max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h4 className="font-black text-sm text-slate-900">إضافة منتج مباشرة لمتجر تاجر</h4>
+                <p className="text-[11px] text-slate-500">تمكين الإدارة من رفع البضائع للمتاجر المعتمدة</p>
+              </div>
+              <button
+                onClick={() => setIsAdminAddProductOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminAddProduct} className="space-y-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">اختر متجر التاجر المستهدف *</label>
+                <select
+                  value={adminTargetMerchantId}
+                  onChange={(e) => setAdminTargetMerchantId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800"
+                  required
+                >
+                  {merchants.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.storeName} ({m.governorate} - {m.district}) {m.isSuspended ? '[موقوف]' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">اسم المنتج *</label>
+                <input
+                  type="text"
+                  required
+                  value={adminNewProdName}
+                  onChange={(e) => setAdminNewProdName(e.target.value)}
+                  placeholder="مثال: أرز بسمتي هندي فاخر 1 كجم"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">القسم / التصنيف *</label>
+                  <select
+                    value={adminNewProdCategory}
+                    onChange={(e) => setAdminNewProdCategory(e.target.value as ProductCategory)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+                  >
+                    <option value="بقوليات ومجففات">بقوليات ومجففات</option>
+                    <option value="خضار وفاكهة">خضار وفاكهة</option>
+                    <option value="جبن وألبان">جبن وألبان</option>
+                    <option value="سوبرماركت كامل">سوبرماركت كامل</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">وحدة البيع *</label>
+                  <select
+                    value={adminNewProdUnit}
+                    onChange={(e) => setAdminNewProdUnit(e.target.value as ProductUnit)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+                  >
+                    <option value="كيلو">كيلو</option>
+                    <option value="نصف كيلو">نصف كيلو</option>
+                    <option value="ربع كيلو">ربع كيلو</option>
+                    <option value="قطعة">قطعة</option>
+                    <option value="علبة">علبة</option>
+                    <option value="كرتونة">كرتونة</option>
+                    <option value="لتر">لتر</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">السعر الأصلي (ج.م) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={adminNewProdPrice}
+                    onChange={(e) => setAdminNewProdPrice(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    سعر العرض / التخفيض (اختياري)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={adminNewProdDiscountPrice}
+                    onChange={(e) => setAdminNewProdDiscountPrice(e.target.value)}
+                    placeholder="مثال: 28 ج.م"
+                    className="w-full bg-amber-50 border border-amber-300 text-amber-900 rounded-xl p-2.5 text-xs font-bold"
+                  />
+                  <span className="text-[10px] text-amber-700 block mt-0.5">
+                    سيظهر ببادج خصم أحمر وتخفيض السعر للعملاء
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">رابط صورة المنتج (URL)</label>
+                <input
+                  type="url"
+                  value={adminNewProdImage}
+                  onChange={(e) => setAdminNewProdImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-left"
+                  dir="ltr"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">وصف المنتج (اختياري)</label>
+                <textarea
+                  value={adminNewProdDesc}
+                  onChange={(e) => setAdminNewProdDesc(e.target.value)}
+                  rows={2}
+                  placeholder="مواصفات المنتج وحجم العبوة والمنشأ..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition-colors cursor-pointer shadow-md text-sm mt-2"
+              >
+                إضافة ونشر المنتج بالمتجر
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Enlarge Debt Payment Receipt Image */}
+      {previewReceiptImage && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-4 space-y-3 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-bold text-slate-900 text-xs">صورة إشعار سداد المديونية المرفوعة</span>
+              <button
+                onClick={() => setPreviewReceiptImage(null)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-auto rounded-2xl bg-slate-900 flex items-center justify-center">
+              <img
+                src={previewReceiptImage}
+                alt="إشعار التحويل"
+                className="w-full h-auto max-h-[68vh] object-contain"
+              />
+            </div>
+            <button
+              onClick={() => setPreviewReceiptImage(null)}
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              إغلاق المعاينة
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

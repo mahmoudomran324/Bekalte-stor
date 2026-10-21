@@ -9,6 +9,7 @@ import {
   Store,
   ShieldCheck,
   ChevronDown,
+  Zap,
 } from 'lucide-react';
 import { EGYPT_LOCATIONS } from '../../utils/storage';
 
@@ -22,9 +23,11 @@ interface HeaderProps {
   onOpenCart: () => void;
   onOpenOrders: () => void;
   onOpenSupport: () => void;
-  onOpenRoleSwitch: () => void;
   activeOrdersCount: number;
   onOpenPledge: () => void;
+  onOpenPackages: () => void;
+  hasSubscription?: boolean;
+  onOpenRoleSwitch?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,6 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRoleSwitch,
   activeOrdersCount,
   onOpenPledge,
+  onOpenPackages,
+  hasSubscription,
 }) => {
   const currentGovObj = EGYPT_LOCATIONS.find((l) => l.governorate === selectedGov) || EGYPT_LOCATIONS[0];
 
@@ -145,7 +150,21 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2.5 w-full md:w-auto justify-end">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
+            {/* Packages Subscription Button */}
+            <button
+              onClick={onOpenPackages}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                hasSubscription
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'
+              }`}
+              title="باقات التوصيل الشهري المجاني"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-600" />
+              <span>{hasSubscription ? 'توصيل شهري مجاني نشط' : 'باقات التوصيل الشهري'}</span>
+            </button>
+
             {/* Orders button */}
             <button
               onClick={onOpenOrders}

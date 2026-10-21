@@ -21,6 +21,7 @@ interface CartModalProps {
   onClearCart: () => void;
   onProceedToCheckout: () => void;
   shippingPerStore: number;
+  hasDeliverySubscription?: boolean;
 }
 
 export const CartModal: React.FC<CartModalProps> = ({
@@ -32,6 +33,7 @@ export const CartModal: React.FC<CartModalProps> = ({
   onClearCart,
   onProceedToCheckout,
   shippingPerStore,
+  hasDeliverySubscription,
 }) => {
   if (!isOpen) return null;
 
@@ -64,7 +66,7 @@ export const CartModal: React.FC<CartModalProps> = ({
     0
   );
 
-  const totalShipping = merchantIds.length * shippingPerStore;
+  const totalShipping = hasDeliverySubscription ? 0 : merchantIds.length * shippingPerStore;
   const grandTotal = itemsSubtotal + totalShipping;
 
   return (
