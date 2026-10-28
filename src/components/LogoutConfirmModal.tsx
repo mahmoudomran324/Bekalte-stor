@@ -19,7 +19,7 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
   return (
     <div
       onClick={onCancel}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fadeIn"
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fadeIn"
     >
       <div
         onClick={(e) => e.stopPropagation()}

@@ -3,22 +3,14 @@
   <head>
     <meta charset="utf-8">
     <title>شات عربي - جاري التحويل</title>
+    <meta http-equiv="refresh" content="0; URL=./">
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // Mitigates 404 errors by redirecting back to the index with the path
-      var pathSegmentsToKeep = 1;
-      var l = window.location;
-      l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash
-      );
+      // Instant redirect to app entry
+      window.location.replace('./');
     </script>
   </head>
-  <body style="background-color: #0b0f17; color: #fff; font-family: sans-serif; text-align: center; padding-top: 50px;">
-    <h2>جاري توجيهك إلى شات عربي...</h2>
-    <p><a href="./" style="color: #10b981;">انقر هنا إذا لم يتم تحويلك تلقائياً</a></p>
+  <body style="background-color: #0b0f17; color: #fff; font-family: 'Cairo', sans-serif; text-align: center; padding-top: 60px;">
+    <h2>جاري تحويلك إلى شات عربي...</h2>
+    <p><a href="./" style="color: #10b981; font-weight: bold; text-decoration: underline;">انقر هنا للدخول إلى الشات مباشرة</a></p>
   </body>
 </html>

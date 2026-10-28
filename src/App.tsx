@@ -538,6 +538,15 @@ export default function App() {
   };
 
   const handleConfirmLogout = () => {
+    const prevUserId = currentUser?.id;
+    if (prevUserId) {
+      setUsers((prev) => prev.filter((u) => u.id !== prevUserId || u.isSimulated));
+    }
+    try {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    } catch {
+      // ignore
+    }
     setCurrentUser(null);
     setActiveAdmin(null);
     setIsLogoutModalOpen(false);
@@ -593,7 +602,9 @@ export default function App() {
     return Array.from(convMap.values());
   }, [messages, currentUser, users]);
 
-  const activeRoom = rooms.find((r) => r.id === activeRoomId) || rooms[0];
+  const activeRoom = (rooms && rooms.length > 0) 
+    ? (rooms.find((r) => r.id === activeRoomId) || rooms[0]) 
+    : DEFAULT_ROOMS[0];
   const activePrivateUser = activePrivateUserId
     ? users.find((u) => u.id === activePrivateUserId)
     : null;
@@ -692,9 +703,9 @@ export default function App() {
                 <div className="flex items-center gap-2 truncate">
                   <span className="font-bold text-white flex items-center gap-1.5 shrink-0">
                     <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{activeRoom.name}</span>
+                    <span>{activeRoom?.name || 'الدردشة العامة'}</span>
                   </span>
-                  {activeRoom.topic && (
+                  {activeRoom?.topic && (
                     <span className="text-[11px] text-slate-400 truncate">
                       · {activeRoom.topic}
                     </span>

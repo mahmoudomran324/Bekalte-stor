@@ -54,6 +54,7 @@ export const UsersSidebar: React.FC<UsersSidebarProps> = ({
 
   const staff = filteredUsers.filter((u) => u.role === 'admin' || u.role === 'moderator');
   const members = filteredUsers.filter((u) => u.role !== 'admin' && u.role !== 'moderator');
+  const selfUser = users.find((u) => u.id === currentUserId);
 
   return (
     <>
@@ -142,6 +143,43 @@ export const UsersSidebar: React.FC<UsersSidebarProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Persistent Bottom User Profile & Logout */}
+        {selfUser && (
+          <div className="p-3 border-t border-slate-800 bg-slate-950/80 shrink-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="relative shrink-0">
+                  <img
+                    src={selfUser.avatar}
+                    alt={selfUser.name}
+                    className="w-8 h-8 rounded-full object-cover border border-emerald-500/60"
+                  />
+                  <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
+                </div>
+                <div className="min-w-0 text-right">
+                  <p className="text-xs font-bold text-white truncate leading-tight">
+                    {selfUser.name}
+                  </p>
+                  <p className="text-[10px] text-emerald-400 truncate">
+                    {selfUser.badgeTitle || 'متصل الآن'}
+                  </p>
+                </div>
+              </div>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="px-2.5 py-1.5 bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 hover:border-rose-600 rounded-lg transition-all text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+                  title="تسجيل الخروج من الحساب"
+                  aria-label="تسجيل الخروج"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>خروج</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* User Detail & Actions Modal */}
         {selectedUser && (
