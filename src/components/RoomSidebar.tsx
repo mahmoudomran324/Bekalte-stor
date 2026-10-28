@@ -20,6 +20,7 @@ interface RoomSidebarProps {
   onSelectRoom: (roomId: string) => void;
   onSelectPrivate: (userId: string) => void;
   privateConversations: ActiveConversation[];
+  roomOccupants?: Record<string, number>;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
 }
@@ -39,6 +40,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({
   onSelectRoom,
   onSelectPrivate,
   privateConversations,
+  roomOccupants,
   isOpenMobile,
   onCloseMobile,
 }) => {
@@ -85,6 +87,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({
               {rooms.map((room) => {
                 const isActive = activeRoomId === room.id && !activePrivateUserId;
                 const icon = ROOM_ICONS[room.icon] || <MessageSquare className="w-4 h-4" />;
+                const occupantsCount = roomOccupants?.[room.id] ?? 1;
 
                 return (
                   <button
@@ -110,23 +113,38 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs truncate flex items-center gap-1.5">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="font-bold text-xs truncate flex items-center gap-1.5 text-slate-100">
                           {room.name}
                           {room.isPinned && (
-                            <Pin className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                            <Pin className="w-2.5 h-2.5 text-amber-400 fill-amber-400 shrink-0" />
                           )}
                           {room.isLocked && (
-                            <Lock className="w-2.5 h-2.5 text-rose-400" />
+                            <Lock className="w-2.5 h-2.5 text-rose-400 shrink-0" />
                           )}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-normal">
+
+                        {/* Room Occupants Badge */}
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold tabular-nums flex items-center gap-1 border shrink-0 transition-colors ${
+                            isActive
+                              ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50'
+                              : 'bg-slate-950/80 text-emerald-400/90 border-slate-700/60'
+                          }`}
+                          title={`${occupantsCount} متواجد حالياً في غرفة ${room.name}`}
+                        >
+                          <Users className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <span>{occupantsCount} متواجد</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p className="text-[11px] text-slate-400 line-clamp-1 leading-snug">
+                          {room.description}
+                        </p>
+                        <span className="text-[10px] text-slate-500 font-normal shrink-0">
                           {room.category}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5 leading-snug">
-                        {room.description}
-                      </p>
                     </div>
                   </button>
                 );
