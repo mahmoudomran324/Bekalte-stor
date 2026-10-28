@@ -1,0 +1,6 @@
+{
+  "name": "شات عربي - محادثات جماعية وخاصة ولوحة تحكم المشرفين",
+  "description": "منصة شات عربي للدردشة الجماعية والخاصة ومشاركة الصور مع لوحة تحكم متقدمة للمشرفين وإدارة الصلاحيات.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
