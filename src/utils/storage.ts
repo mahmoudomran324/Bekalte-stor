@@ -10,7 +10,57 @@ const STORAGE_KEYS = {
   MUTED_USERS: 'chat_arabi_muted_users',
   ACTIVE_USERS: 'chat_arabi_active_users',
   SOUND_ENABLED: 'chat_arabi_sound_enabled',
+  FILTERED_WORDS: 'chat_arabi_filtered_words',
+  FILTER_MODE: 'chat_arabi_filter_mode',
 };
+
+export const DEFAULT_FILTERED_WORDS: string[] = [
+  'سب',
+  'شتيمة',
+  'نصاب',
+  'احتيال',
+  'قمار',
+  'porn',
+  'scam',
+];
+
+export function applyWordFilter(
+  text: string,
+  bannedWords: string[],
+  mode: 'mask' | 'block' = 'mask'
+): { allowed: boolean; filteredText: string; blockedWord?: string } {
+  if (!bannedWords || bannedWords.length === 0 || !text) {
+    return { allowed: true, filteredText: text };
+  }
+
+  let cleaned = text;
+  let detectedWord: string | undefined;
+
+  for (const word of bannedWords) {
+    const trimmed = word.trim();
+    if (!trimmed) continue;
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'gi');
+
+    if (regex.test(cleaned)) {
+      detectedWord = trimmed;
+      if (mode === 'block') {
+        return {
+          allowed: false,
+          filteredText: text,
+          blockedWord: trimmed,
+        };
+      }
+      cleaned = cleaned.replace(regex, '***');
+    }
+  }
+
+  return {
+    allowed: true,
+    filteredText: cleaned,
+    blockedWord: detectedWord,
+  };
+}
 
 // Root admin default configuration
 export const ROOT_ADMIN: ModeratorRecord = {

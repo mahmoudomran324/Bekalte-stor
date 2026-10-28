@@ -19,7 +19,8 @@ import {
   ExternalLink,
   Edit,
   Sparkles,
-  Plus
+  Plus,
+  Filter
 } from 'lucide-react';
 import { 
   ModeratorRecord, 
@@ -52,6 +53,11 @@ interface AdminPanelProps {
   allMessages: ChatMessage[];
   onDeleteMessage: (msgId: string) => void;
   onTriggerGitHubSync?: () => void;
+  bannedWords: string[];
+  filterMode: 'mask' | 'block';
+  onAddBannedWord: (word: string) => void;
+  onRemoveBannedWord: (word: string) => void;
+  onSetFilterMode: (mode: 'mask' | 'block') => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -75,8 +81,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeleteRoom,
   allMessages,
   onDeleteMessage,
+  bannedWords,
+  filterMode,
+  onAddBannedWord,
+  onRemoveBannedWord,
+  onSetFilterMode,
 }) => {
-  const [activeTab, setActiveTab] = useState<'mods' | 'users' | 'rooms' | 'media' | 'github'>('mods');
+  const [activeTab, setActiveTab] = useState<'mods' | 'users' | 'rooms' | 'media' | 'filter' | 'github'>('mods');
+  const [newFilterWord, setNewFilterWord] = useState('');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -346,6 +358,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <span>معرض وتدقيق الصور</span>
                 <span className="mr-auto text-[10px] tabular-nums bg-slate-800 px-1.5 py-0.2 rounded-full">
                   {mediaList.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('filter')}
+                className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-colors whitespace-nowrap ${
+                  activeTab === 'filter'
+                    ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                }`}
+              >
+                <Filter className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>فلترة الكلمات المحظورة</span>
+                <span className="mr-auto text-[10px] tabular-nums bg-slate-800 px-1.5 py-0.2 rounded-full">
+                  {bannedWords.length}
                 </span>
               </button>
 
@@ -727,6 +754,122 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* TAB 4.5: BANNED WORDS FILTER */}
+              {activeTab === 'filter' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-rose-400" />
+                        <span>أداة فلترة الكلمات المحظورة والمسيئة في الشات</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        إضافة كلمات وعبارات لحجبها تلقائياً من غرف المحادثة العامة لحماية المجتمع من الألفاظ غير اللائقة
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Filter Mode Selector */}
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-bold text-slate-200 block">
+                        طريقة معالجة الكلمات المحظورة عند إرسالها:
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        اختر إما استبدال الكلمة بنجوم (***) أو منع إرسال الرسالة نهائياً
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => onSetFilterMode('mask')}
+                        className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                          filterMode === 'mask'
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        استبدال بنجوم (***)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onSetFilterMode('block')}
+                        className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                          filterMode === 'block'
+                            ? 'bg-rose-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        حجب ومنع الرسالة
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Add New Word Form */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (newFilterWord.trim()) {
+                        onAddBannedWord(newFilterWord.trim());
+                        setNewFilterWord('');
+                      }
+                    }}
+                    className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row gap-2.5"
+                  >
+                    <input
+                      type="text"
+                      value={newFilterWord}
+                      onChange={(e) => setNewFilterWord(e.target.value)}
+                      placeholder="اكتب الكلمة أو العبارة المراد حظرها (مثال: سباب، احتيال...)"
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newFilterWord.trim()}
+                      className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>إضافة للفلتر</span>
+                    </button>
+                  </form>
+
+                  {/* Word List Chips */}
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-slate-300">
+                        الكلمات والعبارات المدرجة حالياً ({bannedWords.length}):
+                      </span>
+                    </div>
+
+                    {bannedWords.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-6">
+                        قائمة الفلتر فارغة حالياً. أضف كلمات أعلاه لتفعيل الحظر التلقائي.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {bannedWords.map((word) => (
+                          <div
+                            key={word}
+                            className="bg-slate-900 border border-rose-900/50 text-rose-300 text-xs px-3 py-1.5 rounded-xl flex items-center gap-2 group hover:border-rose-700 transition-colors"
+                          >
+                            <span className="font-semibold">{word}</span>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveBannedWord(word)}
+                              className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors"
+                              title="حذف من الفلتر"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

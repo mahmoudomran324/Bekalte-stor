@@ -24,7 +24,9 @@ import {
   loadFromStorage, 
   saveToStorage, 
   broadcastEvent, 
-  subscribeBroadcast 
+  subscribeBroadcast,
+  applyWordFilter,
+  DEFAULT_FILTERED_WORDS
 } from './utils/storage';
 import { playSound } from './utils/audio';
 import { getDefaultAvatar } from './utils/avatars';
@@ -83,6 +85,14 @@ export default function App() {
     loadFromStorage<boolean>(STORAGE_KEYS.SOUND_ENABLED, true)
   );
 
+  // 11. Banned words filtering
+  const [bannedWords, setBannedWords] = useState<string[]>(() =>
+    loadFromStorage<string[]>(STORAGE_KEYS.FILTERED_WORDS, DEFAULT_FILTERED_WORDS)
+  );
+  const [filterMode, setFilterMode] = useState<'mask' | 'block'>(() =>
+    loadFromStorage<'mask' | 'block'>(STORAGE_KEYS.FILTER_MODE, 'mask')
+  );
+
   // Persist key state
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.ROOMS, rooms);
@@ -91,6 +101,14 @@ export default function App() {
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.MESSAGES, messages);
   }, [messages]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.FILTERED_WORDS, bannedWords);
+  }, [bannedWords]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.FILTER_MODE, filterMode);
+  }, [filterMode]);
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.MODERATORS, moderators);
@@ -162,6 +180,10 @@ export default function App() {
         setRooms(event.payload as ChatRoom[]);
       } else if (event.type === 'SYNC_MODERATORS') {
         setModerators(event.payload as ModeratorRecord[]);
+      } else if (event.type === 'SYNC_FILTER_WORDS') {
+        setBannedWords(event.payload as string[]);
+      } else if (event.type === 'SYNC_FILTER_MODE') {
+        setFilterMode(event.payload as 'mask' | 'block');
       }
     });
 
@@ -241,6 +263,17 @@ export default function App() {
       return;
     }
 
+    // Filter bad words in public chat rooms
+    let finalText = text;
+    if (!activePrivateUserId && text) {
+      const filterResult = applyWordFilter(text, bannedWords, filterMode);
+      if (!filterResult.allowed) {
+        alert(`عذراً، لا يمكن إرسال الرسالة لأنها تحتوي على لفظ محظور في الشات العام ("${filterResult.blockedWord}"). يرجى الالتزام بالاحترام المتبادل.`);
+        return;
+      }
+      finalText = filterResult.filteredText;
+    }
+
     const newMessage: ChatMessage = {
       id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       roomId: !activePrivateUserId ? activeRoomId : undefined,
@@ -252,7 +285,7 @@ export default function App() {
       senderBadge: activeAdmin
         ? activeAdmin.badgeTitle
         : currentUser.badgeTitle,
-      text,
+      text: finalText,
       imageUrl,
       timestamp: Date.now(),
     };
@@ -425,6 +458,26 @@ export default function App() {
     if (activeRoomId === roomId) {
       setActiveRoomId('general');
     }
+  };
+
+  // Word filter management
+  const handleAddBannedWord = (word: string) => {
+    if (!bannedWords.includes(word)) {
+      const updated = [...bannedWords, word];
+      setBannedWords(updated);
+      broadcastEvent({ type: 'SYNC_FILTER_WORDS', payload: updated });
+    }
+  };
+
+  const handleRemoveBannedWord = (word: string) => {
+    const updated = bannedWords.filter((w) => w !== word);
+    setBannedWords(updated);
+    broadcastEvent({ type: 'SYNC_FILTER_WORDS', payload: updated });
+  };
+
+  const handleSetFilterMode = (mode: 'mask' | 'block') => {
+    setFilterMode(mode);
+    broadcastEvent({ type: 'SYNC_FILTER_MODE', payload: mode });
   };
 
   // Admin login handler
@@ -674,6 +727,7 @@ export default function App() {
           onUnbanUser={handleUnbanUser}
           onMuteUser={handleMuteUser}
           onUnmuteUser={handleUnmuteUser}
+          onLogout={handleUserLogout}
           isOpenMobile={mobileUsersOpen}
           onCloseMobile={() => setMobileUsersOpen(false)}
         />
@@ -719,6 +773,11 @@ export default function App() {
         onDeleteRoom={handleDeleteRoom}
         allMessages={messages}
         onDeleteMessage={handleDeleteMessage}
+        bannedWords={bannedWords}
+        filterMode={filterMode}
+        onAddBannedWord={handleAddBannedWord}
+        onRemoveBannedWord={handleRemoveBannedWord}
+        onSetFilterMode={handleSetFilterMode}
       />
 
       {/* Logout Confirmation Dialog */}

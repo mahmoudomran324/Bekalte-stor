@@ -8,7 +8,8 @@ import {
   Search, 
   ShieldAlert, 
   VolumeX, 
-  CheckCircle2 
+  CheckCircle2,
+  LogOut
 } from 'lucide-react';
 import { User, ModeratorPermissions } from '../types/chat';
 
@@ -21,6 +22,7 @@ interface UsersSidebarProps {
   onMuteUser?: (userId: string, userName: string) => void;
   onUnbanUser?: (userId: string) => void;
   onUnmuteUser?: (userId: string) => void;
+  onLogout?: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
 }
@@ -34,6 +36,7 @@ export const UsersSidebar: React.FC<UsersSidebarProps> = ({
   onMuteUser,
   onUnbanUser,
   onUnmuteUser,
+  onLogout,
   isOpenMobile,
   onCloseMobile,
 }) => {
@@ -208,6 +211,19 @@ export const UsersSidebar: React.FC<UsersSidebarProps> = ({
 
               {/* Action Buttons */}
               <div className="space-y-2">
+                {selectedUser.id === currentUserId && onLogout && (
+                  <button
+                    onClick={() => {
+                      setSelectedUser(null);
+                      onLogout();
+                    }}
+                    className="w-full py-2.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-400" />
+                    <span>تسجيل الخروج من الحساب</span>
+                  </button>
+                )}
+
                 {selectedUser.id !== currentUserId && (
                   <button
                     onClick={() => {
