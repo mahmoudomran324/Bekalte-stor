@@ -7,6 +7,7 @@ import { UsersSidebar } from './components/UsersSidebar';
 import { JoinModal } from './components/JoinModal';
 import { ImageLightbox } from './components/ImageLightbox';
 import { AdminPanel } from './components/AdminPanel';
+import { LogoutConfirmModal } from './components/LogoutConfirmModal';
 import { 
   User, 
   ChatRoom, 
@@ -66,6 +67,7 @@ export default function App() {
   // 8. Modals & Drawers
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
   const [mobileUsersOpen, setMobileUsersOpen] = useState(false);
 
@@ -479,10 +481,14 @@ export default function App() {
   };
 
   const handleUserLogout = () => {
-    if (confirm('هل ترغب بتسجيل الخروج وتغيير الاسم المستعار؟')) {
-      setCurrentUser(null);
-      setIsJoinModalOpen(true);
-    }
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setCurrentUser(null);
+    setActiveAdmin(null);
+    setIsLogoutModalOpen(false);
+    setIsJoinModalOpen(true);
   };
 
   // Filter messages for current view (Public Room or Private DM)
@@ -713,6 +719,14 @@ export default function App() {
         onDeleteRoom={handleDeleteRoom}
         allMessages={messages}
         onDeleteMessage={handleDeleteMessage}
+      />
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onConfirm={handleConfirmLogout}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        userName={currentUser?.name}
       />
     </div>
   );

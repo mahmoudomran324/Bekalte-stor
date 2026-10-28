@@ -248,7 +248,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="mahmoudomran324@gmail.com"
+                    placeholder="ادخل بريد الإدارة الإلكتروني..."
                     className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500"
                     required
                   />
@@ -262,7 +262,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     type="password"
                     value={loginPass}
                     onChange={(e) => setLoginPass(e.target.value)}
-                    placeholder="••••••"
+                    placeholder="••••••••"
                     className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500"
                     required
                   />
@@ -273,15 +273,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     {loginError}
                   </div>
                 )}
-
-                <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-800/40 text-[11px] text-amber-300/90 leading-relaxed">
-                  💡 بيانات المدير العام الافتراضية:
-                  <div className="mt-1 font-mono text-[11px] text-slate-300">
-                    البريد: mahmoudomran324@gmail.com
-                    <br />
-                    الباسورد: 123456
-                  </div>
-                </div>
 
                 <button
                   type="submit"

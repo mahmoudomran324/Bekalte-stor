@@ -142,11 +142,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <button
               onClick={onLogout}
-              className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-700 rounded transition-colors mr-1"
-              title="تسجيل الخروج أو تغيير الاسم"
+              className="p-1.5 text-slate-300 hover:text-rose-300 hover:bg-rose-950/40 border border-transparent hover:border-rose-800/50 rounded-lg transition-colors flex items-center gap-1 text-xs mr-1"
+              title="تسجيل الخروج من الشات"
               aria-label="تسجيل الخروج"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden md:inline text-[11px] font-semibold text-rose-300">خروج</span>
             </button>
           </div>
         ) : (
